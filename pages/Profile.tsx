@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
-import { User, Mail, Phone, Save, CheckCircle, Stethoscope, ChevronDown } from 'lucide-react';
+import { User, Mail, Phone, Save, CheckCircle, Stethoscope, ChevronDown, Camera } from 'lucide-react';
 
 const MEDICAL_SPECIALIZATIONS = [
   "General Physician",
@@ -29,10 +29,27 @@ export const Profile: React.FC = () => {
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [specialization, setSpecialization] = useState(user?.specialization || '');
+  const [image, setImage] = useState(user?.image || '');
   
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        alert("File size should be less than 5MB");
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +62,7 @@ export const Profile: React.FC = () => {
         name, 
         email, 
         phone,
+        image,
         specialization: user?.role === UserRole.DOCTOR ? specialization : undefined
       });
       setSuccess(true);
@@ -65,14 +83,34 @@ export const Profile: React.FC = () => {
 
       <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mb-8 pb-8 border-b border-slate-100 text-center sm:text-left">
-          <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 border-4 border-white shadow-md relative shrink-0">
-            <User size={32} />
+          
+          {/* Profile Image with Upload Overlay */}
+          <div className="relative group cursor-pointer">
+            <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 border-4 border-white shadow-md relative shrink-0 overflow-hidden">
+              {image ? (
+                <img src={image} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User size={32} />
+              )}
+            </div>
+            
+            <label className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10">
+              <Camera size={24} className="text-white" />
+              <input 
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
+                onChange={handleImageUpload}
+              />
+            </label>
+
             {user?.role === UserRole.DOCTOR && (
-              <div className="absolute -bottom-2 -right-2 bg-blue-600 text-white p-1.5 rounded-full border-2 border-white">
+              <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white p-1.5 rounded-full border-2 border-white z-20 pointer-events-none">
                 <Stethoscope size={14} />
               </div>
             )}
           </div>
+
           <div>
             <h2 className="text-xl font-bold text-slate-900">{user?.name}</h2>
             <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
@@ -85,6 +123,7 @@ export const Profile: React.FC = () => {
                 </span>
               )}
             </div>
+            <p className="text-xs text-slate-400 mt-2">Click on the picture to update</p>
           </div>
         </div>
 
@@ -124,7 +163,7 @@ export const Profile: React.FC = () => {
                 <Phone className="absolute left-3 top-3 text-slate-400" size={18} />
                 <input
                   type="tel"
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="+91 (555) 000-0000"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"

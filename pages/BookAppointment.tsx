@@ -3,7 +3,7 @@ import { mockBackend } from '../services/mockBackend';
 import { Doctor } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Calendar, User, CheckCircle, Search, X, Stethoscope, Loader2, GraduationCap, Clock, MapPin, Building2, Star, Briefcase, ArrowRight } from 'lucide-react';
+import { Calendar, User, CheckCircle, Search, X, Stethoscope, Loader2, GraduationCap, Clock, MapPin, Building2, Star, Briefcase, ArrowRight, Wallet } from 'lucide-react';
 
 export const BookAppointment: React.FC = () => {
   const { user } = useAuth();
@@ -12,6 +12,7 @@ export const BookAppointment: React.FC = () => {
   
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [viewingDoctor, setViewingDoctor] = useState<Doctor | null>(null); // State for View More Modal
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [notes, setNotes] = useState('');
@@ -47,7 +48,7 @@ export const BookAppointment: React.FC = () => {
         doctorName: selectedDoctor.name,
         date: selectedDate,
         time: selectedTime,
-        notes: notes
+        notes: notes ? notes.trim() : '' // Ensure it's a trimmed string
       });
       setStep(3); // Success step
     } catch (e) {
@@ -141,8 +142,11 @@ export const BookAppointment: React.FC = () => {
                       <div className="flex flex-col items-center shrink-0">
                          <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-blue-100 p-1 mb-2 shrink-0">
                            <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center overflow-hidden">
-                             {/* In a real app, use doc.image here */}
-                             <User size={64} className="text-slate-300" />
+                             {doc.image ? (
+                               <img src={doc.image} alt={doc.name} className="w-full h-full object-cover" />
+                             ) : (
+                               <User size={64} className="text-slate-300" />
+                             )}
                            </div>
                          </div>
                       </div>
@@ -206,14 +210,17 @@ export const BookAppointment: React.FC = () => {
 
                         {/* Bio */}
                         <div className="mb-6">
-                          <p className="text-sm text-slate-500 leading-relaxed">
+                          <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">
                             {doc.bio || `${doc.name} is a highly qualified ${doc.specialization} with years of experience in treating complex cases. Dedicated to patient care and well-being.`}
                           </p>
                         </div>
 
                         {/* Action Buttons */}
                         <div className="flex items-center gap-4">
-                           <button className="flex-1 sm:flex-none bg-white border border-rose-400 text-rose-500 hover:bg-rose-50 px-6 py-2.5 rounded-lg font-medium transition-colors text-sm">
+                           <button 
+                             onClick={() => setViewingDoctor(doc)}
+                             className="flex-1 sm:flex-none bg-white border border-rose-400 text-rose-500 hover:bg-rose-50 px-6 py-2.5 rounded-lg font-medium transition-colors text-sm"
+                           >
                              View More <ArrowRight size={14} className="inline ml-1" />
                            </button>
                            <button 
@@ -244,12 +251,147 @@ export const BookAppointment: React.FC = () => {
         </div>
       )}
 
+      {/* VIEW MORE MODAL */}
+      {viewingDoctor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in" onClick={() => setViewingDoctor(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-up relative" onClick={(e) => e.stopPropagation()}>
+            {/* Close Button */}
+            <button 
+              onClick={() => setViewingDoctor(null)}
+              className="absolute top-4 right-4 p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors z-10"
+            >
+              <X size={20} className="text-slate-600" />
+            </button>
+
+            {/* Header Section */}
+            <div className="relative">
+              {/* Background pattern */}
+              <div className="h-32 bg-gradient-to-r from-blue-600 to-blue-800 relative overflow-hidden">
+                 <div className="absolute inset-0 opacity-10">
+                    <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                      <path d="M0 100 C 20 0 50 0 100 100 Z" fill="white" />
+                    </svg>
+                 </div>
+              </div>
+              <div className="px-6 md:px-8 -mt-12 flex flex-col md:flex-row gap-6 items-center md:items-end">
+                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg bg-white overflow-hidden shrink-0">
+                    {viewingDoctor.image ? (
+                      <img src={viewingDoctor.image} alt={viewingDoctor.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
+                          <User size={48} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-center md:text-left pb-4 flex-1">
+                    <h2 className="text-2xl font-bold text-slate-900">{viewingDoctor.name}</h2>
+                    <p className="text-blue-600 font-medium flex items-center justify-center md:justify-start gap-1">
+                      <Stethoscope size={16} /> {viewingDoctor.specialization}
+                    </p>
+                  </div>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 md:p-8 space-y-6">
+                {/* Stats Row */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-6 border-b border-slate-100">
+                  <div className="text-center p-3 bg-slate-50 rounded-xl">
+                      <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Experience</p>
+                      <p className="font-semibold text-slate-900 text-sm md:text-base">{viewingDoctor.experience || 'N/A'}</p>
+                  </div>
+                  <div className="text-center p-3 bg-slate-50 rounded-xl">
+                      <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Rating</p>
+                      <div className="flex items-center justify-center gap-1 font-semibold text-slate-900 text-sm md:text-base">
+                        {viewingDoctor.rating || 4.5} <Star size={14} className="fill-yellow-400 text-yellow-400" />
+                      </div>
+                  </div>
+                  <div className="text-center p-3 bg-slate-50 rounded-xl">
+                      <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Patients</p>
+                      <p className="font-semibold text-slate-900 text-sm md:text-base">{viewingDoctor.reviewCount || '100'}+</p>
+                  </div>
+                  <div className="text-center p-3 bg-slate-50 rounded-xl">
+                      <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Fee</p>
+                      <p className="font-semibold text-slate-900 text-sm md:text-base">{viewingDoctor.consultationFee ? `₹${viewingDoctor.consultationFee}` : '₹800'}</p>
+                  </div>
+                </div>
+
+                {/* About */}
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+                    <User size={20} className="text-blue-500" /> About Doctor
+                  </h3>
+                  <p className="text-slate-600 leading-relaxed text-sm md:text-base">
+                    {viewingDoctor.bio || `Dr. ${viewingDoctor.name} is a dedicated specialist with extensive experience in ${viewingDoctor.specialization}. Committed to providing excellent patient care and known for a compassionate approach.`}
+                  </p>
+                </div>
+
+                {/* Details */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="bg-white border border-slate-100 p-4 rounded-xl flex items-start gap-3 shadow-sm hover:border-blue-200 transition-colors">
+                      <Building2 className="text-blue-500 mt-1 shrink-0" size={20} />
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">Hospital</p>
+                        <p className="text-sm text-slate-500">{viewingDoctor.hospital || 'HopCare Main Center'}</p>
+                      </div>
+                  </div>
+                  <div className="bg-white border border-slate-100 p-4 rounded-xl flex items-start gap-3 shadow-sm hover:border-blue-200 transition-colors">
+                      <MapPin className="text-red-500 mt-1 shrink-0" size={20} />
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">Location</p>
+                        <p className="text-sm text-slate-500">{viewingDoctor.location || 'New Delhi'}</p>
+                      </div>
+                  </div>
+                    <div className="bg-white border border-slate-100 p-4 rounded-xl flex items-start gap-3 shadow-sm hover:border-blue-200 transition-colors">
+                      <GraduationCap className="text-purple-500 mt-1 shrink-0" size={20} />
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">Education</p>
+                        <p className="text-sm text-slate-500">{viewingDoctor.qualifications || 'MBBS, MD'}</p>
+                      </div>
+                  </div>
+                  <div className="bg-white border border-slate-100 p-4 rounded-xl flex items-start gap-3 shadow-sm hover:border-blue-200 transition-colors">
+                      <Wallet className="text-emerald-500 mt-1 shrink-0" size={20} />
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">Consultation Fee</p>
+                        <p className="text-sm text-slate-500">{viewingDoctor.consultationFee ? `₹${viewingDoctor.consultationFee}` : '₹800'}</p>
+                      </div>
+                  </div>
+                </div>
+
+                {/* Action */}
+                <div className="pt-4 flex gap-4">
+                  <button 
+                    onClick={() => setViewingDoctor(null)}
+                    className="flex-1 py-3 border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition-colors"
+                  >
+                    Close
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setSelectedDoctor(viewingDoctor);
+                      setViewingDoctor(null);
+                      setStep(2);
+                    }}
+                    className="flex-[2] py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20"
+                  >
+                    Book Appointment
+                  </button>
+                </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {step === 2 && selectedDoctor && (
         <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-100 shadow-sm animate-slide-in-right">
           
           <div className="bg-blue-50/50 p-6 rounded-xl border border-blue-100 mb-8 flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4">
-             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-blue-600 border border-blue-100 shadow-sm shrink-0">
-                 <User size={32} />
+             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-blue-600 border border-blue-100 shadow-sm shrink-0 overflow-hidden">
+                 {selectedDoctor.image ? (
+                   <img src={selectedDoctor.image} alt={selectedDoctor.name} className="w-full h-full object-cover" />
+                 ) : (
+                   <User size={32} />
+                 )}
              </div>
              <div>
                  <h2 className="text-xl font-bold text-slate-900">{selectedDoctor.name}</h2>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { UserRole } from '../types';
-import { Activity, ArrowLeft, ShieldCheck, RefreshCw, User, Stethoscope } from 'lucide-react';
+import { Activity, ArrowLeft, ShieldCheck, RefreshCw, User, Stethoscope, Check, X, AlertCircle } from 'lucide-react';
 
 const MEDICAL_SPECIALIZATIONS = [
   "General Physician", "Cardiologist", "Dermatologist", "Neurologist", 
@@ -115,6 +115,21 @@ export const Auth: React.FC = () => {
     setCaptchaInput('');
   };
 
+  // --- Password Validation Logic ---
+  const passwordRequirements = [
+    { id: 'len', label: "At least 8 characters", valid: formData.password.length >= 8 },
+    { id: 'upper', label: "Includes uppercase letter", valid: /[A-Z]/.test(formData.password) },
+    { id: 'lower', label: "Includes lowercase letter", valid: /[a-z]/.test(formData.password) },
+    { id: 'num', label: "Includes number", valid: /[0-9]/.test(formData.password) },
+    { id: 'spec', label: "Includes special char (!@#$%)", valid: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password) },
+  ];
+
+  // Check if password contains name parts (if name part is > 2 chars)
+  const nameParts = formData.name.toLowerCase().split(' ').filter(part => part.length > 2);
+  const containsName = nameParts.length > 0 && nameParts.some(part => formData.password.toLowerCase().includes(part));
+
+  const isPasswordStrong = !containsName && passwordRequirements.every(req => req.valid);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -127,9 +142,15 @@ export const Auth: React.FC = () => {
       return;
     }
 
-    if (isRegister && formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      return;
+    if (isRegister) {
+      if (formData.password !== formData.confirmPassword) {
+        setError("Passwords do not match");
+        return;
+      }
+      if (!isPasswordStrong) {
+        setError("Please meet all password strength requirements.");
+        return;
+      }
     }
 
     setLoading(true);
@@ -157,9 +178,9 @@ export const Auth: React.FC = () => {
       } else {
         navigate('/dashboard');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError('Authentication failed. Please check your credentials.');
+      setError(err.message || 'Authentication failed. Please check your credentials.');
       refreshCaptcha(); 
       setCaptchaInput('');
     } finally {
@@ -215,7 +236,7 @@ export const Auth: React.FC = () => {
         </div>
 
         {/* Right Side - Form */}
-        <div className="md:w-7/12 p-6 md:p-12 overflow-y-auto max-h-[none] md:max-h-[90vh]">
+        <div className="md:w-7/12 p-6 md:p-12 overflow-y-auto overflow-x-hidden max-h-[none] md:max-h-[90vh]">
           <div className="text-center mb-8">
             <h3 className="text-2xl font-bold text-slate-900">
               {isRegister ? "Create Account" : "Sign In"}
@@ -232,8 +253,8 @@ export const Auth: React.FC = () => {
           </div>
 
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-6 flex items-center gap-2 animate-fade-in">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-600" />
+            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-6 flex items-center gap-2 animate-fade-in border border-red-100">
+              <AlertCircle size={16} className="shrink-0" />
               {error}
             </div>
           )}
@@ -243,7 +264,7 @@ export const Auth: React.FC = () => {
               <>
                 {/* Role Selection */}
                 <div className="grid grid-cols-2 gap-4 mb-2">
-                  <label className={`cursor-pointer border-2 rounded-xl p-3 flex flex-col items-center gap-2 transition-all ${formData.role === UserRole.PATIENT ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-100 hover:border-blue-300'}`}>
+                  <label className={`cursor-pointer border-2 rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all h-full ${formData.role === UserRole.PATIENT ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-100 hover:border-blue-300'}`}>
                     <input 
                       type="radio" 
                       name="role" 
@@ -255,7 +276,7 @@ export const Auth: React.FC = () => {
                     <User size={24} />
                     <span className="font-bold text-sm">I'm a Patient</span>
                   </label>
-                  <label className={`cursor-pointer border-2 rounded-xl p-3 flex flex-col items-center gap-2 transition-all ${formData.role === UserRole.DOCTOR ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-100 hover:border-blue-300'}`}>
+                  <label className={`cursor-pointer border-2 rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all h-full ${formData.role === UserRole.DOCTOR ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-100 hover:border-blue-300'}`}>
                     <input 
                       type="radio" 
                       name="role" 
@@ -277,7 +298,7 @@ export const Auth: React.FC = () => {
                     required
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                    className="w-full px-4 h-12 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                     placeholder="John Doe"
                   />
                 </div>
@@ -290,8 +311,8 @@ export const Auth: React.FC = () => {
                     required
                     value={formData.phone}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                    placeholder="+1 (555) 000-0000"
+                    className="w-full px-4 h-12 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                    placeholder="+91 (555) 000-0000"
                   />
                 </div>
 
@@ -305,7 +326,7 @@ export const Auth: React.FC = () => {
                         name="specialization"
                         value={formData.specialization}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                        className="w-full px-4 h-12 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm bg-white"
                         required
                       >
                         <option value="">Select Specialization</option>
@@ -319,22 +340,24 @@ export const Auth: React.FC = () => {
                         <input
                           name="experience"
                           type="number"
+                          min="0"
                           value={formData.experience}
                           onChange={handleChange}
-                          className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                          className="w-full px-4 h-12 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
                           placeholder="e.g. 5"
                           required
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-600 mb-1">Consultation Fee ($)</label>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1">Consultation Fee (₹)</label>
                         <input
                           name="consultationFee"
                           type="number"
+                          min="0"
                           value={formData.consultationFee}
                           onChange={handleChange}
-                          className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
-                          placeholder="e.g. 100"
+                          className="w-full px-4 h-12 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                          placeholder="e.g. 800"
                           required
                         />
                       </div>
@@ -352,7 +375,7 @@ export const Auth: React.FC = () => {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                className="w-full px-4 h-12 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                 placeholder="you@example.com"
               />
             </div>
@@ -365,9 +388,39 @@ export const Auth: React.FC = () => {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                className="w-full px-4 h-12 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                 placeholder="••••••••"
               />
+              
+              {/* Password Requirements Checklist (Register Mode Only) */}
+              {isRegister && (
+                <div className="mt-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                  <p className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Password Requirements</p>
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {passwordRequirements.map(req => (
+                      <div key={req.id} className={`flex items-center gap-2 text-xs transition-colors ${req.valid ? 'text-green-600 font-medium' : 'text-slate-400'}`}>
+                        {req.valid ? (
+                          <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                            <Check size={10} className="text-green-600" />
+                          </div>
+                        ) : (
+                          <div className="w-4 h-4 rounded-full bg-slate-200 shrink-0" />
+                        )}
+                        <span>{req.label}</span>
+                      </div>
+                    ))}
+                    {/* Name Check */}
+                    {containsName && (
+                      <div className="flex items-center gap-2 text-xs text-red-500 font-medium animate-fade-in">
+                         <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                            <X size={10} className="text-red-500" />
+                         </div>
+                         <span>Cannot contain your name</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {isRegister && (
@@ -379,7 +432,7 @@ export const Auth: React.FC = () => {
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                  className="w-full px-4 h-12 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                   placeholder="••••••••"
                 />
               </div>
@@ -388,13 +441,13 @@ export const Auth: React.FC = () => {
             {/* Visual CAPTCHA */}
             <div className="pt-2">
               <label className="block text-sm font-semibold text-slate-700 mb-2">Security Check</label>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative group cursor-pointer w-full sm:w-auto" onClick={refreshCaptcha} title="Click to refresh">
+              <div className="flex flex-col sm:flex-row gap-4 items-stretch">
+                <div className="relative group cursor-pointer w-full sm:w-auto shrink-0" onClick={refreshCaptcha} title="Click to refresh">
                   <canvas 
                     ref={canvasRef} 
                     width="200" 
-                    height="50" 
-                    className="w-full sm:w-auto rounded-lg border border-slate-200 bg-slate-100"
+                    height="46" 
+                    className="w-full sm:w-auto rounded-lg border border-slate-200 bg-slate-100 block"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors rounded-lg flex items-center justify-center">
                     <RefreshCw size={16} className="text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -405,7 +458,7 @@ export const Auth: React.FC = () => {
                   value={captchaInput}
                   onChange={(e) => setCaptchaInput(e.target.value)}
                   placeholder="Enter code"
-                  className="flex-1 px-4 py-2 sm:py-0 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none tracking-widest font-mono text-center sm:text-left"
+                  className="flex-1 px-4 h-12 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none tracking-widest font-mono text-center sm:text-left text-lg"
                   maxLength={6}
                 />
               </div>

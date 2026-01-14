@@ -1,26 +1,128 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { mockBackend } from '../services/mockBackend';
-import { Appointment, AiRecord, AppointmentStatus, UserRole } from '../types';
-import { Calendar, Clock, MapPin, Activity, BrainCircuit, ArrowRight } from 'lucide-react';
+import { Appointment, AiRecord, AppointmentStatus, UserRole, Doctor } from '../types';
+import { Calendar, Clock, MapPin, Activity, BrainCircuit, ArrowRight, X, FileText, User, Stethoscope, CheckCircle, AlertCircle, Trash2, Loader2, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const PatientDashboard: React.FC = () => {
   const { user } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [aiHistory, setAiHistory] = useState<AiRecord[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  
+  // Cancel Logic State
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
-  useEffect(() => {
+  // Memoize fetch function to reuse it
+  const fetchData = useCallback(async () => {
     if (user) {
-      mockBackend.getAppointments(user.id, UserRole.PATIENT).then(setAppointments);
-      mockBackend.getAiHistory().then(setAiHistory);
+      const [appts, history, docs] = await Promise.all([
+        mockBackend.getAppointments(user.id, UserRole.PATIENT),
+        mockBackend.getAiHistory(),
+        mockBackend.getDoctors()
+      ]);
+      setAppointments(appts);
+      setAiHistory(history);
+      setDoctors(docs);
     }
   }, [user]);
 
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Reset confirmation state when modal closes or changes
+  useEffect(() => {
+    setShowCancelModal(false);
+    setIsProcessing(false);
+  }, [selectedAppointment]);
+
   const upcomingAppointments = appointments.filter(a => a.status !== AppointmentStatus.CANCELLED && a.status !== AppointmentStatus.COMPLETED);
 
+  const getDoctorDetails = (doctorId: string) => {
+    return doctors.find(d => d.id === doctorId);
+  };
+
+  const handleCancelClick = () => {
+    setShowCancelModal(true);
+  };
+
+  const confirmCancel = async () => {
+    if (!selectedAppointment) return;
+
+    setIsProcessing(true);
+    try {
+      await mockBackend.updateAppointmentStatus(selectedAppointment.id, AppointmentStatus.CANCELLED);
+      await fetchData(); 
+      setShowCancelModal(false);
+      setSelectedAppointment(null);
+    } catch (error) {
+      console.error("Failed to cancel appointment", error);
+      alert("Failed to cancel appointment. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // --- Dynamic Health Status Logic ---
+  const healthStatus = useMemo(() => {
+    if (aiHistory.length === 0) {
+      return { 
+        status: 'Good', 
+        subText: 'No recent health issues', 
+        icon: Activity, 
+        colorClass: 'text-emerald-500', 
+        bgClass: 'bg-emerald-50' 
+      };
+    }
+
+    const latest = aiHistory[0];
+    const date = new Date(latest.date);
+    const now = new Date();
+    // Calculate difference in days
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+    // If last check was more than 7 days ago, assume stable
+    if (diffDays > 7) {
+      return { 
+        status: 'Good', 
+        subText: 'Stable since last checkup', 
+        icon: Activity, 
+        colorClass: 'text-emerald-500', 
+        bgClass: 'bg-emerald-50' 
+      };
+    }
+
+    // Check for severe keywords in prediction
+    const lowerPred = latest.prediction.toLowerCase();
+    const isSevere = ['cardiac', 'heart', 'severe', 'emergency', 'stroke', 'fracture'].some(k => lowerPred.includes(k));
+
+    if (isSevere) {
+      return { 
+        status: 'Action Needed', 
+        subText: 'Critical symptoms detected', 
+        icon: AlertCircle, 
+        colorClass: 'text-red-600', 
+        bgClass: 'bg-red-50' 
+      };
+    }
+
+    // Default for recent non-severe issues
+    return { 
+      status: 'Monitor', 
+      subText: `Recent: ${latest.prediction}`, 
+      icon: Stethoscope, 
+      colorClass: 'text-amber-500', 
+      bgClass: 'bg-amber-50' 
+    };
+  }, [aiHistory]);
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-slide-up" style={{animationDelay: '0ms'}}>
         <div>
@@ -54,11 +156,11 @@ export const PatientDashboard: React.FC = () => {
 
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm transform transition-transform hover:scale-[1.02]">
           <div className="flex items-center gap-3 mb-4">
-            <Activity className="text-emerald-500 bg-emerald-50 p-2 rounded-lg w-10 h-10" />
+            <healthStatus.icon className={`${healthStatus.colorClass} ${healthStatus.bgClass} p-2 rounded-lg w-10 h-10`} />
             <span className="font-semibold text-slate-700">Health Status</span>
           </div>
-          <div className="text-3xl font-bold text-slate-900">Good</div>
-          <div className="text-sm text-slate-500 mt-1">Based on last checkup</div>
+          <div className="text-3xl font-bold text-slate-900">{healthStatus.status}</div>
+          <div className="text-sm text-slate-500 mt-1">{healthStatus.subText}</div>
         </div>
       </div>
 
@@ -68,7 +170,7 @@ export const PatientDashboard: React.FC = () => {
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-slate-900">Upcoming Appointments</h2>
-            <Link to="/my-appointments" className="text-sm text-blue-600 hover:underline">View All</Link>
+            <Link to="/book-appointment" className="text-sm text-blue-600 hover:underline">View All</Link>
           </div>
 
           {upcomingAppointments.length === 0 ? (
@@ -82,28 +184,35 @@ export const PatientDashboard: React.FC = () => {
             </div>
           ) : (
             <div className="grid gap-4">
-              {upcomingAppointments.map(appt => (
-                <div key={appt.id} className="bg-white p-5 rounded-xl border border-slate-100 hover:border-blue-200 transition-colors shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 font-bold text-lg">
-                      {new Date(appt.date).getDate()}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900">{appt.doctorName}</h4>
-                      <p className="text-sm text-slate-500">Specialist Checkup</p>
-                      <div className="flex items-center gap-3 mt-2 text-xs text-slate-400 font-medium">
-                        <span className="flex items-center gap-1"><Clock size={12} /> {appt.time}</span>
-                        <span className="flex items-center gap-1"><MapPin size={12} /> Clinic A</span>
+              {upcomingAppointments.map(appt => {
+                const doctor = getDoctorDetails(appt.doctorId);
+                return (
+                  <div 
+                    key={appt.id} 
+                    onClick={() => setSelectedAppointment(appt)}
+                    className="bg-white p-5 rounded-xl border border-slate-100 hover:border-blue-400 transition-all shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer group hover:shadow-md"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 font-bold text-lg shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        {new Date(appt.date).getDate()}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 group-hover:text-blue-700 transition-colors">{appt.doctorName}</h4>
+                        <p className="text-sm text-slate-500">{doctor?.specialization || 'Specialist'} Checkup</p>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-slate-400 font-medium">
+                          <span className="flex items-center gap-1"><Clock size={12} /> {appt.time}</span>
+                          <span className="flex items-center gap-1"><MapPin size={12} /> {doctor?.hospital || 'Clinic A'}</span>
+                        </div>
                       </div>
                     </div>
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider self-start sm:self-center ${
+                      appt.status === AppointmentStatus.CONFIRMED ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {appt.status}
+                    </div>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                    appt.status === AppointmentStatus.CONFIRMED ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {appt.status}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -125,7 +234,7 @@ export const PatientDashboard: React.FC = () => {
                 <div key={i} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start mb-2">
                     <span className="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded uppercase">AI Analysis</span>
-                    <span className="text-xs text-slate-400">{new Date().toLocaleDateString()}</span>
+                    <span className="text-xs text-slate-400">{new Date(record.date).toLocaleDateString()}</span>
                   </div>
                   <h4 className="font-bold text-slate-900 text-sm mb-1">{record.prediction}</h4>
                   <p className="text-xs text-slate-500 line-clamp-2">{record.recommendation}</p>
@@ -143,6 +252,151 @@ export const PatientDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Appointment Detail Modal */}
+      {selectedAppointment && (
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+          onClick={() => setSelectedAppointment(null)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-slide-up relative cursor-auto" 
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-slate-50 p-6 border-b border-slate-100 flex items-start justify-between">
+              <div className="flex items-center gap-4">
+                 <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center text-blue-600 border border-slate-200 shadow-sm overflow-hidden">
+                     {(() => {
+                        const doc = getDoctorDetails(selectedAppointment.doctorId);
+                        return doc?.image ? (
+                           <img src={doc.image} alt={doc.name} className="w-full h-full object-cover" />
+                        ) : (
+                           <User size={28} />
+                        );
+                     })()}
+                 </div>
+                 <div>
+                    <h3 className="text-lg font-bold text-slate-900">{selectedAppointment.doctorName}</h3>
+                    <p className="text-blue-600 text-sm font-medium flex items-center gap-1">
+                      <Stethoscope size={14} /> 
+                      {getDoctorDetails(selectedAppointment.doctorId)?.specialization || 'Specialist'}
+                    </p>
+                 </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setSelectedAppointment(null)}
+                className="text-slate-400 hover:text-slate-600 transition-colors bg-white p-1 rounded-full border border-slate-100 hover:bg-slate-50"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-6">
+              {/* Status Badge */}
+              <div className="flex justify-between items-center">
+                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Status</span>
+                 <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+                    selectedAppointment.status === AppointmentStatus.CONFIRMED ? 'bg-green-100 text-green-700' : 
+                    selectedAppointment.status === AppointmentStatus.CANCELLED ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                 }`}>
+                    {selectedAppointment.status === AppointmentStatus.CONFIRMED ? <CheckCircle size={14} /> : 
+                     selectedAppointment.status === AppointmentStatus.CANCELLED ? <AlertCircle size={14} /> : <Clock size={14} />}
+                    {selectedAppointment.status}
+                 </span>
+              </div>
+
+              {/* Details Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <p className="text-xs text-slate-500 mb-1 flex items-center gap-1"><Calendar size={12} /> Date</p>
+                    <p className="font-semibold text-slate-900">{selectedAppointment.date}</p>
+                 </div>
+                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <p className="text-xs text-slate-500 mb-1 flex items-center gap-1"><Clock size={12} /> Time</p>
+                    <p className="font-semibold text-slate-900">{selectedAppointment.time}</p>
+                 </div>
+                 <div className="col-span-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <p className="text-xs text-slate-500 mb-1 flex items-center gap-1"><MapPin size={12} /> Location</p>
+                    <p className="font-semibold text-slate-900">
+                      {getDoctorDetails(selectedAppointment.doctorId)?.hospital || 'HopCare Main Clinic, New Delhi'}
+                    </p>
+                 </div>
+              </div>
+
+              {/* Notes - Fixed Rendering */}
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                   <FileText size={14} /> Patient Notes
+                </p>
+                <div className="bg-white p-4 rounded-xl border border-slate-200 text-sm text-slate-700 leading-relaxed max-h-40 overflow-y-auto whitespace-pre-wrap">
+                  {selectedAppointment.notes ? (
+                    `"${selectedAppointment.notes}"`
+                  ) : (
+                    <span className="text-slate-400 italic">No notes added.</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer Action */}
+              <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                 <button 
+                   type="button"
+                   onClick={() => setSelectedAppointment(null)}
+                   className="flex-1 bg-slate-100 text-slate-700 font-semibold py-3 rounded-xl hover:bg-slate-200 transition-colors"
+                 >
+                   Close
+                 </button>
+                 {(selectedAppointment.status === AppointmentStatus.PENDING || selectedAppointment.status === AppointmentStatus.CONFIRMED) && (
+                   <button 
+                     type="button"
+                     onClick={handleCancelClick}
+                     disabled={isProcessing}
+                     className="flex-1 font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer bg-red-50 text-red-600 border border-red-100 hover:bg-red-100"
+                   >
+                     <Trash2 size={18} />
+                     Cancel Booking
+                   </button>
+                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-slide-up text-center border border-slate-100" onClick={e => e.stopPropagation()}>
+                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+                    <AlertTriangle size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">Cancel Appointment?</h3>
+                <p className="text-slate-500 mb-8 leading-relaxed">
+                    Are you sure you want to cancel this appointment?
+                </p>
+                
+                <div className="flex gap-3">
+                    <button 
+                        onClick={() => setShowCancelModal(false)}
+                        className="flex-1 py-3 border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50 transition-colors"
+                    >
+                        No, Keep
+                    </button>
+                    <button 
+                        onClick={confirmCancel}
+                        disabled={isProcessing}
+                        className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20 flex items-center justify-center gap-2"
+                    >
+                        {isProcessing && <Loader2 size={18} className="animate-spin" />}
+                        Yes, Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   );
 };

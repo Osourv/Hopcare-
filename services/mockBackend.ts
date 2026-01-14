@@ -31,8 +31,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'New Delhi',
     rating: 4.9,
     reviewCount: 2100,
+    image: 'https://randomuser.me/api/portraits/men/32.jpg',
     bio: 'Dr. Amit Sharma is a distinguished Cardiologist known for his expertise in interventional cardiology. He has performed over 10,000 successful cardiac procedures.',
-    availability: ['09:00', '10:00', '11:00', '16:00'] 
+    availability: ['09:00', '10:00', '11:00', '16:00'],
+    consultationFee: '1500'
   },
   { 
     id: 'dm2', 
@@ -46,8 +48,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'Mumbai',
     rating: 4.7,
     reviewCount: 850,
+    image: 'https://randomuser.me/api/portraits/men/45.jpg',
     bio: 'Dr. Rahul Verma specializes in clinical and aesthetic dermatology. He is an expert in treating acne, hair loss, and anti-aging therapies using advanced laser technology.',
-    availability: ['11:00', '13:00', '15:00', '17:00'] 
+    availability: ['11:00', '13:00', '15:00', '17:00'],
+    consultationFee: '1200'
   },
   { 
     id: 'dm3', 
@@ -61,8 +65,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'Bangalore',
     rating: 4.8,
     reviewCount: 3200,
+    image: 'https://randomuser.me/api/portraits/men/22.jpg',
     bio: 'Dr. Rakesh Gupta is a senior General Physician with vast experience in managing chronic lifestyle diseases like diabetes, hypertension, and thyroid disorders.',
-    availability: ['09:30', '12:00', '14:00', '18:00'] 
+    availability: ['09:30', '12:00', '14:00', '18:00'],
+    consultationFee: '800'
   },
   { 
     id: 'dm4', 
@@ -76,8 +82,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'Gurugram',
     rating: 4.9,
     reviewCount: 1500,
+    image: 'https://randomuser.me/api/portraits/men/64.jpg',
     bio: 'Dr. Sandeep Kumar is a leading Neurologist specializing in stroke management, epilepsy, and movement disorders. He is known for his patient-centric approach.',
-    availability: ['10:00', '12:00', '14:00'] 
+    availability: ['10:00', '12:00', '14:00'],
+    consultationFee: '1800'
   },
   { 
     id: 'dm5', 
@@ -91,8 +99,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'New Delhi',
     rating: 4.6,
     reviewCount: 980,
+    image: 'https://randomuser.me/api/portraits/men/11.jpg',
     bio: 'Dr. Anil Mehta is a renowned Orthopedic surgeon specializing in joint replacement and sports injuries. He has helped numerous athletes return to peak performance.',
-    availability: ['09:00', '11:00', '15:00'] 
+    availability: ['09:00', '11:00', '15:00'],
+    consultationFee: '1400'
   },
   { 
     id: 'dm6', 
@@ -106,8 +116,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'Hyderabad',
     rating: 4.8,
     reviewCount: 1120,
+    image: 'https://randomuser.me/api/portraits/men/86.jpg',
     bio: 'Dr. Vikram Singh is a compassionate pediatrician dedicated to newborn care, vaccination, and treating childhood infections.',
-    availability: ['08:30', '10:30', '16:30'] 
+    availability: ['08:30', '10:30', '16:30'],
+    consultationFee: '1000'
   },
   { 
     id: 'dm7', 
@@ -121,8 +133,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'Ahmedabad',
     rating: 4.7,
     reviewCount: 1400,
+    image: 'https://randomuser.me/api/portraits/men/75.jpg',
     bio: 'Dr. Rajesh Patel is an expert in treating digestive disorders, liver diseases, and performing advanced endoscopic procedures.',
-    availability: ['11:00', '13:00', '16:00'] 
+    availability: ['11:00', '13:00', '16:00'],
+    consultationFee: '1300'
   },
   { 
     id: 'dm8', 
@@ -136,8 +150,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'New Delhi',
     rating: 4.9,
     reviewCount: 670,
+    image: 'https://randomuser.me/api/portraits/men/33.jpg',
     bio: 'Dr. Mohit Jain specializes in mental health, treating anxiety, depression, and stress-related disorders with a holistic combination of therapy and medication.',
-    availability: ['14:00', '16:00', '18:00'] 
+    availability: ['14:00', '16:00', '18:00'],
+    consultationFee: '1500'
   },
   { 
     id: 'dm9', 
@@ -151,8 +167,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'Mumbai',
     rating: 4.8,
     reviewCount: 540,
+    image: 'https://randomuser.me/api/portraits/men/51.jpg',
     bio: 'Dr. Arjun Malhotra provides confidential and expert care for sexual health issues. He is a certified sexologist with extensive experience in counseling.',
-    availability: ['10:00', '12:00', '17:00'] 
+    availability: ['10:00', '12:00', '17:00'],
+    consultationFee: '2000'
   },
   { 
     id: 'dm10', 
@@ -166,8 +184,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'Bangalore',
     rating: 4.6,
     reviewCount: 900,
+    image: 'https://randomuser.me/api/portraits/men/62.jpg',
     bio: 'Dr. Prakash Iyer is a senior ENT surgeon specializing in endoscopic sinus surgery, microscopic ear surgery, and voice disorders.',
-    availability: ['09:00', '11:00', '14:00'] 
+    availability: ['09:00', '11:00', '14:00'],
+    consultationFee: '900'
   },
 
   // --- FEMALE DOCTORS ---
@@ -183,8 +203,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'Gurugram',
     rating: 4.9,
     reviewCount: 2500,
+    image: 'https://randomuser.me/api/portraits/women/44.jpg',
     bio: 'Dr. Neha Sharma is a leading Obstetrician and Gynecologist. She specializes in high-risk pregnancies, infertility treatments, and laparoscopic surgeries.',
-    availability: ['10:00', '13:00', '15:00'] 
+    availability: ['10:00', '13:00', '15:00'],
+    consultationFee: '1600'
   },
   { 
     id: 'df2', 
@@ -198,8 +220,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'Noida',
     rating: 4.7,
     reviewCount: 600,
+    image: 'https://randomuser.me/api/portraits/women/65.jpg',
     bio: 'Dr. Pooja Verma is passionate about skincare and aesthetic medicine. She offers personalized treatments for acne, pigmentation, and skin rejuvenation.',
-    availability: ['11:00', '14:00', '16:00'] 
+    availability: ['11:00', '14:00', '16:00'],
+    consultationFee: '1100'
   },
   { 
     id: 'df3', 
@@ -213,8 +237,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'Mumbai',
     rating: 4.8,
     reviewCount: 1300,
+    image: 'https://randomuser.me/api/portraits/women/29.jpg',
     bio: 'Dr. Anjali Gupta is a trusted child specialist known for her friendly demeanor. She has expertise in child nutrition, growth monitoring, and asthma management.',
-    availability: ['09:00', '11:00', '17:00'] 
+    availability: ['09:00', '11:00', '17:00'],
+    consultationFee: '900'
   },
   { 
     id: 'df4', 
@@ -228,8 +254,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'New Delhi',
     rating: 4.6,
     reviewCount: 950,
+    image: 'https://randomuser.me/api/portraits/women/63.jpg',
     bio: 'Dr. Ritu Singh is a dedicated Family Physician providing comprehensive care for all age groups. She focuses on preventive healthcare and chronic disease management.',
-    availability: ['08:00', '10:00', '13:00'] 
+    availability: ['08:00', '10:00', '13:00'],
+    consultationFee: '700'
   },
   { 
     id: 'df5', 
@@ -243,8 +271,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'Ahmedabad',
     rating: 4.8,
     reviewCount: 780,
+    image: 'https://randomuser.me/api/portraits/women/90.jpg',
     bio: 'Dr. Sneha Patel is an expert in treating hormonal imbalances, including diabetes, thyroid disorders, and PCOD/PCOS.',
-    availability: ['10:30', '12:30', '15:30'] 
+    availability: ['10:30', '12:30', '15:30'],
+    consultationFee: '1400'
   },
   { 
     id: 'df6', 
@@ -258,8 +288,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'Chennai',
     rating: 4.7,
     reviewCount: 1100,
+    image: 'https://randomuser.me/api/portraits/women/33.jpg',
     bio: 'Dr. Kavita Mehta specializes in cataract surgery and laser vision correction. She is committed to restoring and preserving vision for her patients.',
-    availability: ['09:00', '11:00', '14:00'] 
+    availability: ['09:00', '11:00', '14:00'],
+    consultationFee: '1000'
   },
   { 
     id: 'df7', 
@@ -273,8 +305,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'Mumbai',
     rating: 4.9,
     reviewCount: 890,
+    image: 'https://randomuser.me/api/portraits/women/58.jpg',
     bio: 'Dr. Shreya Jain is a highly skilled non-invasive cardiologist. She specializes in echocardiography and preventive cardiology for women.',
-    availability: ['11:00', '13:00', '16:00'] 
+    availability: ['11:00', '13:00', '16:00'],
+    consultationFee: '1600'
   },
   { 
     id: 'df8', 
@@ -288,8 +322,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'Bangalore',
     rating: 4.8,
     reviewCount: 560,
+    image: 'https://randomuser.me/api/portraits/women/68.jpg',
     bio: 'Dr. Aarti Malhotra is a compassionate mental health professional. She treats mood disorders, addiction, and provides family counseling.',
-    availability: ['12:00', '14:00', '16:00'] 
+    availability: ['12:00', '14:00', '16:00'],
+    consultationFee: '1300'
   },
   { 
     id: 'df9', 
@@ -303,8 +339,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'Mumbai',
     rating: 4.7,
     reviewCount: 720,
+    image: 'https://randomuser.me/api/portraits/women/8.jpg',
     bio: 'Dr. Nisha Iyer is an expert in headache medicine and neuro-immunology. She is known for her accurate diagnosis and effective treatment plans.',
-    availability: ['09:30', '11:30', '15:30'] 
+    availability: ['09:30', '11:30', '15:30'],
+    consultationFee: '1700'
   },
   { 
     id: 'df10', 
@@ -318,8 +356,10 @@ const MOCK_DOCTORS: Doctor[] = [
     location: 'Mumbai',
     rating: 4.9,
     reviewCount: 950,
+    image: 'https://randomuser.me/api/portraits/women/92.jpg',
     bio: 'Dr. Priya Kulkarni is a renowned Medical Oncologist. She specializes in breast cancer treatment and immunotherapy, offering hope and advanced care.',
-    availability: ['10:00', '12:00', '14:00'] 
+    availability: ['10:00', '12:00', '14:00'],
+    consultationFee: '2000'
   }
 ];
 
@@ -346,24 +386,8 @@ export const mockBackend = {
       return foundUser;
     }
 
-    // 3. Fallback: Default login if user not found (For Demo convenience)
-    let targetRole = role;
-    if (!targetRole) {
-         const isDoctorEmail = email.toLowerCase().includes('dr') || email.toLowerCase().includes('doctor');
-         targetRole = isDoctorEmail ? UserRole.DOCTOR : UserRole.PATIENT;
-    }
-
-    const fallbackUser: User = { 
-        id: 'fallback-' + Math.random().toString(36).substr(2, 9), 
-        name: targetRole === UserRole.DOCTOR ? 'Dr. Demo' : 'Demo Patient', 
-        email, 
-        role: targetRole,
-        specialization: targetRole === UserRole.DOCTOR ? 'General Physician' : undefined,
-        availability: targetRole === UserRole.DOCTOR ? ['09:00', '10:00', '11:00'] : undefined
-    };
-
-    localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(fallbackUser));
-    return fallbackUser;
+    // 3. User Not Found - enforce registration
+    throw new Error('Account not found. Please register an account first.');
   },
 
   register: async (userData: Partial<User>): Promise<User> => {
@@ -405,6 +429,18 @@ export const mockBackend = {
   getCurrentUser: (): User | null => {
     const stored = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
     return stored ? JSON.parse(stored) : null;
+  },
+
+  getUserById: async (id: string): Promise<User | null> => {
+    // 1. Check static doctors
+    const staticDoc = MOCK_DOCTORS.find(d => d.id === id);
+    if (staticDoc) return staticDoc;
+
+    // 2. Check stored users
+    const storedUsersStr = localStorage.getItem(STORAGE_KEYS.USERS);
+    const storedUsers: User[] = storedUsersStr ? JSON.parse(storedUsersStr) : [];
+    const found = storedUsers.find(u => u.id === id);
+    return found || null;
   },
 
   updateUser: async (userId: string, data: Partial<User>): Promise<User> => {
